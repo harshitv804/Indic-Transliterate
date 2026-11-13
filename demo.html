@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indic Transliterate — live word-by-word demo</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: rgba(255, 255, 255, 0.045);
+    --panel-active: rgba(255, 255, 255, 0.09);
+    --line: rgba(255, 255, 255, 0.09);
+    --text: #eef2ff;
+    --muted: #8b93b0;
+    --accent: #8b7bff;
+    --accent-2: #4fd1c5;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(1100px 600px at 12% -10%, #2a1f5e 0%, transparent 60%),
+      radial-gradient(900px 500px at 92% 0%, #123a4a 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+  }
+
+  header { text-align: center; margin-bottom: 34px; }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    background: linear-gradient(92deg, #c9c2ff, #7ee7db 70%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .sub {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14.5px;
+    letter-spacing: 0.01em;
+  }
+
+  .sub b { color: #c7cbe0; font-weight: 600; }
+
+  .board { display: grid; gap: 14px; }
+
+  .row {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--panel);
+    padding: 16px 18px;
+    opacity: 0.42;
+    transform: translateY(2px);
+    transition: opacity .45s ease, transform .45s ease,
+                background .45s ease, border-color .45s ease;
+  }
+
+  .row.active {
+    opacity: 1;
+    transform: none;
+    background: var(--panel-active);
+    border-color: rgba(139, 123, 255, 0.45);
+    box-shadow: 0 18px 40px -28px rgba(139, 123, 255, 0.9);
+  }
+
+  .row.done { opacity: 0.72; }
+
+  .head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .lang { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+
+  .tag {
+    font-size: 11.5px;
+    color: #b9c0da;
+    background: rgba(139, 123, 255, 0.16);
+    border: 1px solid rgba(139, 123, 255, 0.3);
+    padding: 3px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+  }
+
+  .beam {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .panes {
+    display: grid;
+    grid-template-columns: 1fr 34px 1fr;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .pane {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(8, 12, 26, 0.55);
+    padding: 12px 14px;
+    min-height: 74px;
+  }
+
+  .label {
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .text {
+    font-size: 17px;
+    line-height: 1.55;
+    min-height: 26px;
+    word-break: break-word;
+    font-family: "Inter", "Segoe UI", "Noto Sans Tamil", "Noto Sans Telugu",
+                 "Noto Sans Malayalam", "Noto Sans Kannada", "Noto Sans Devanagari",
+                 system-ui, sans-serif;
+  }
+
+  .text.out { color: #bff5ec; }
+
+  .caret::after {
+    content: "";
+    display: inline-block;
+    width: 2px;
+    height: 1.05em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    background: var(--accent-2);
+    animation: blink 1s steps(1) infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .arrow {
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-size: 18px;
+  }
+
+  footer {
+    margin-top: 26px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .play {
+    font: inherit;
+    color: var(--text);
+    background: rgba(139, 123, 255, 0.16);
+    border: 1px solid rgba(139, 123, 255, 0.42);
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+  }
+
+  .play:hover { background: rgba(139, 123, 255, 0.28); border-color: rgba(139, 123, 255, 0.7); }
+
+  .stats { margin-left: auto; display: flex; gap: 16px; }
+
+  .stats span b { color: #c7cbe0; font-weight: 600; }
+
+  @media (max-width: 720px) {
+    .panes { grid-template-columns: 1fr; }
+    .arrow { display: none; }
+    .beam { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Indic Transliterate</h1>
+    <p class="sub">
+      Live word-by-word transliteration &middot; <b>5.37M</b> parameters &middot;
+      <b>12 MB</b> ONNX &middot; beam search &middot; trained on Aksharantar
+    </p>
+  </header>
+
+  <div class="board" id="board"></div>
+
+  <footer>
+    <button class="play" id="replay">Replay</button>
+    <span id="status">Starting&hellip;</span>
+    <span class="stats">
+      <span>train loss <b>0.063</b></span>
+      <span>val loss <b>0.155</b></span>
+    </span>
+  </footer>
+</div>
+
+<script>
+  // Outputs are real model predictions (beam size 4).
+  const DATA = [
+    {
+      lang: "Tamil",
+      tag: "en → ta",
+      text: "Good morning, how are you?",
+      words: {
+        good: "கூட்",
+        morning: "மோர்னிங்",
+        how: "ஹோவ்",
+        are: "அரே",
+        you: "யூ"
+      }
+    },
+    {
+      lang: "Telugu",
+      tag: "en → te",
+      text: "Welcome to Hyderabad.",
+      words: { welcome: "వెల్కోమ్", to: "టో", hyderabad: "హైడరాబాద్" }
+    },
+    {
+      lang: "Malayalam",
+      tag: "en → ml",
+      text: "Thank you very much.",
+      words: { thank: "തങ്ക്", you: "യോ", very: "വെറി", much: "മുച്ച്" }
+    },
+    {
+      lang: "Kannada",
+      tag: "en → kn",
+      text: "Welcome to Bangalore.",
+      words: { welcome: "ವೆಲ್ಕೋಮ್", to: "ಟೊ", bangalore: "ಬಂಗಳೋರ್" }
+    },
+    {
+      lang: "Hindi",
+      tag: "en → hi",
+      text: "Good morning friends.",
+      words: { good: "गूड", morning: "मोर्निंग", friends: "फ्राइंड्स" }
+    }
+  ];
+
+  const WORD_CHAR = /[\p{L}\p{M}]/u;
+  const board = document.getElementById("board");
+  const statusEl = document.getElementById("status");
+  const replayBtn = document.getElementById("replay");
+
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  function splitRuns(text) {
+    const runs = [];
+    let start = 0;
+    let current = WORD_CHAR.test(text[0]);
+
+    for (let i = 1; i < text.length; i++) {
+      const isWord = WORD_CHAR.test(text[i]);
+      if (isWord !== current) {
+        runs.push({ isWord: current, start, end: i, text: text.slice(start, i) });
+        start = i;
+        current = isWord;
+      }
+    }
+    runs.push({ isWord: current, start, end: text.length, text: text.slice(start) });
+    return runs;
+  }
+
+  // Mirrors the app: a word is translated once a separator (space or
+  // punctuation) follows it; the word being typed stays raw.
+  function composeOutput(demo, typedLength, runs) {
+    let out = "";
+    for (const run of runs) {
+      if (run.start >= typedLength) break;
+      const visible = demo.text.slice(run.start, Math.min(run.end, typedLength));
+      if (!run.isWord) {
+        out += visible;
+      } else if (run.end < typedLength) {
+        out += demo.words[run.text.toLowerCase()] || visible;
+      } else {
+        out += visible;
+      }
+    }
+    return out;
+  }
+
+  function buildRow(demo, index) {
+    const row = document.createElement("section");
+    row.className = "row";
+    row.innerHTML = [
+      '<div class="head">',
+      '  <span class="lang">' + demo.lang + "</span>",
+      '  <span class="tag">' + demo.tag + "</span>",
+      '  <span class="beam">beam 4</span>',
+      "</div>",
+      '<div class="panes">',
+      '  <div class="pane">',
+      '    <div class="label">Input</div>',
+      '    <div class="text" id="in-' + index + '"></div>',
+      "  </div>",
+      '  <div class="arrow">→</div>',
+      '  <div class="pane">',
+      '    <div class="label">Output</div>',
+      '    <div class="text out" id="out-' + index + '"></div>',
+      "  </div>",
+      "</div>"
+    ].join("");
+    board.appendChild(row);
+
+    return {
+      row,
+      input: row.querySelector("#in-" + index),
+      output: row.querySelector("#out-" + index)
+    };
+  }
+
+  const rows = DATA.map(buildRow);
+
+  function resetRows() {
+    rows.forEach((r) => {
+      r.row.className = "row";
+      r.input.textContent = "";
+      r.output.textContent = "";
+      r.input.classList.remove("caret");
+      r.output.classList.remove("caret");
+    });
+  }
+
+  async function playDemo(demo, index, alive) {
+    const view = rows[index];
+    const runs = splitRuns(demo.text);
+
+    view.row.className = "row active";
+    statusEl.textContent = "Typing " + demo.lang + " (" + demo.tag + ")";
+    view.input.classList.add("caret");
+    view.output.classList.add("caret");
+
+    for (let typed = 0; typed <= demo.text.length; typed++) {
+      if (!alive()) return;
+
+      const prefix = demo.text.slice(0, typed);
+      const char = demo.text[typed - 1];
+
+      view.input.textContent = prefix;
+      view.output.textContent = composeOutput(demo, typed, runs);
+
+      if (typed === demo.text.length) break;
+
+      // Word boundaries get a beat so the commit is visible.
+      const isBoundary = char === " " || /[.,!?;:]/.test(char);
+      await sleep(isBoundary ? 230 : 46);
+    }
+
+    view.input.classList.remove("caret");
+    view.output.classList.remove("caret");
+    view.row.className = "row done";
+
+    await sleep(900);
+  }
+
+  let runToken = 0;
+
+  async function run() {
+    const token = ++runToken;
+    const alive = () => token === runToken;
+
+    resetRows();
+    statusEl.textContent = "Starting…";
+
+    for (let i = 0; i < DATA.length; i++) {
+      if (!alive()) return;
+      await playDemo(DATA[i], i, alive);
+    }
+
+    if (!alive()) return;
+    statusEl.textContent = "All five languages done — replaying";
+    await sleep(1800);
+
+    if (!alive()) return;
+    run();
+  }
+
+  replayBtn.addEventListener("click", () => {
+    run();
+  });
+
+  run();
+</script>
+</body>
+</html>
