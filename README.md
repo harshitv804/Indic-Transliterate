@@ -41,6 +41,31 @@ cheap to self-host and fast enough for live, word-by-word typing.
 | Languages | English, Tamil, Hindi, Telugu, Malayalam, Kannada |
 | Dataset | [AI4Bharat Aksharantar](https://huggingface.co/datasets/ai4bharat/Aksharantar) |
 
+## Requirements
+
+- **Python 3.10+**
+- **ONNX inference (CPU only):** `huggingface-hub`, `numpy`, `onnxruntime`,
+  `tokenizers`
+- **Web app:** `gradio`
+- **Training / PyTorch inference:** `torch` (CUDA recommended) and
+  `liger-kernel`; training additionally needs `datasets`
+
+Versions used by the Space (`requirements.txt`):
+
+```text
+gradio==6.32.0
+huggingface-hub>=1.16.0,<3.0.0
+numpy>=1.24,<3.0
+onnxruntime>=1.17.0
+tokenizers>=0.15.0
+```
+
+Minimal install for ONNX-only inference:
+
+```bash
+pip install huggingface-hub numpy onnxruntime tokenizers
+```
+
 ## Quickstart
 
 ### 1. Install
