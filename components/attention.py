@@ -13,8 +13,7 @@ def _merge_causal_mask(
     q_len: int,
     k_len: int,
 ) -> torch.Tensor:
-    # SDPA rejects attn_mask + is_causal=True, so merge them. Diagonal stays
-    # visible so a fully masked query row cannot produce NaNs.
+
     q_idx = torch.arange(q_len, device=attn_mask.device)[:, None]
     k_idx = torch.arange(k_len, device=attn_mask.device)[None, :]
     causal = q_idx >= k_idx
@@ -68,10 +67,7 @@ class GatedMultiHeadAttention(nn.Module):
         kv_input = x if context is None else context
         S = kv_input.shape[1]
 
-        # -------------------------------------------------- #
         # Q, K, V projections
-        # -------------------------------------------------- #
-
         q = self.q_proj(x)
         k = self.k_proj(kv_input)
         v = self.v_proj(kv_input)
@@ -80,35 +76,23 @@ class GatedMultiHeadAttention(nn.Module):
         k = k.view(B, S, self.n_heads, self.head_dim)
         v = v.view(B, S, self.n_heads, self.head_dim)
 
-        # -------------------------------------------------- #
         # QK normalization
-        # -------------------------------------------------- #
-
         if self.q_norm is not None:
             q = self.q_norm(q)
             k = self.k_norm(k)
 
-        # -------------------------------------------------- #
         # SDPA layout: (B, H, T, D)
-        # -------------------------------------------------- #
-
         q = q.transpose(1, 2)
         k = k.transpose(1, 2)
         v = v.transpose(1, 2)
 
-        # -------------------------------------------------- #
         # RoPE
-        # -------------------------------------------------- #
-
         if rope is not None:
             cos, sin = rope
             q = apply_rope(q, cos, sin)
             k = apply_rope(k, cos, sin)
 
-        # -------------------------------------------------- #
         # Standard Multi-Head Attention
-        # -------------------------------------------------- #
-
         if is_causal and attn_mask is not None:
             attn_mask = _merge_causal_mask(attn_mask, T, S)
             is_causal = False
@@ -122,10 +106,7 @@ class GatedMultiHeadAttention(nn.Module):
             is_causal=is_causal,
         )
 
-        # -------------------------------------------------- #
         # Elementwise sigmoid gate
-        # -------------------------------------------------- #
-
         attn_out = attn_out.transpose(1, 2)
         attn_out = attn_out.reshape(B, T, -1)
 
@@ -133,8 +114,5 @@ class GatedMultiHeadAttention(nn.Module):
 
         gated_out = attn_out * gate
 
-        # -------------------------------------------------- #
         # Output projection
-        # -------------------------------------------------- #
-
         return self.o_proj(gated_out)
