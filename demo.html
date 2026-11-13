@@ -209,7 +209,7 @@
   <header>
     <h1>Indic Transliterate</h1>
     <p class="sub">
-      Live word-by-word transliteration &middot; <b>5.37M</b> parameters &middot;
+      Live transliteration of romanized input &middot; <b>5.37M</b> parameters &middot;
       <b>12 MB</b> ONNX &middot; beam search &middot; trained on Aksharantar
     </p>
   </header>
@@ -227,43 +227,41 @@
 </div>
 
 <script>
-  // Outputs are real model predictions (beam size 4).
+  // Outputs are real model predictions (beam size 4) for romanized input.
   const DATA = [
     {
       lang: "Tamil",
-      tag: "en → ta",
-      text: "Good morning, how are you?",
+      tag: "roman → ta",
+      text: "vanakkam, eppadi irukkeenga?",
       words: {
-        good: "கூட்",
-        morning: "மோர்னிங்",
-        how: "ஹோவ்",
-        are: "அரே",
-        you: "யூ"
+        vanakkam: "வணக்கம்",
+        eppadi: "எப்படி",
+        irukkeenga: "இருக்கீங்க"
       }
     },
     {
       lang: "Telugu",
-      tag: "en → te",
-      text: "Welcome to Hyderabad.",
-      words: { welcome: "వెల్కోమ్", to: "టో", hyderabad: "హైడరాబాద్" }
+      tag: "roman → te",
+      text: "namaskaram, ela unnaru?",
+      words: { namaskaram: "నమస్కరం", ela: "ఎలా", unnaru: "ఉన్నారు" }
     },
     {
       lang: "Malayalam",
-      tag: "en → ml",
-      text: "Thank you very much.",
-      words: { thank: "തങ്ക്", you: "യോ", very: "വെറി", much: "മുച്ച്" }
+      tag: "roman → ml",
+      text: "njan malayalam padikkunnu.",
+      words: { njan: "ഞാൻ", malayalam: "മലയാളം", padikkunnu: "പഠിക്കുന്നു" }
     },
     {
       lang: "Kannada",
-      tag: "en → kn",
-      text: "Welcome to Bangalore.",
-      words: { welcome: "ವೆಲ್ಕೋಮ್", to: "ಟೊ", bangalore: "ಬಂಗಳೋರ್" }
+      tag: "roman → kn",
+      text: "namaskara, hegiddira?",
+      words: { namaskara: "ನಮಸ್ಕರ", hegiddira: "ಹೇಗಿದ್ದಿರ" }
     },
     {
       lang: "Hindi",
-      tag: "en → hi",
-      text: "Good morning friends.",
-      words: { good: "गूड", morning: "मोर्निंग", friends: "फ्राइंड्स" }
+      tag: "roman → hi",
+      text: "namaste, kaise ho?",
+      words: { namaste: "नमस्ते", kaise: "कैसे", ho: "हो" }
     }
   ];
 
@@ -320,12 +318,12 @@
       "</div>",
       '<div class="panes">',
       '  <div class="pane">',
-      '    <div class="label">Input</div>',
+      '    <div class="label">Romanized</div>',
       '    <div class="text" id="in-' + index + '"></div>',
       "  </div>",
       '  <div class="arrow">→</div>',
       '  <div class="pane">',
-      '    <div class="label">Output</div>',
+      '    <div class="label">Native script</div>',
       '    <div class="text out" id="out-' + index + '"></div>',
       "  </div>",
       "</div>"
@@ -356,8 +354,7 @@
     const runs = splitRuns(demo.text);
 
     view.row.className = "row active";
-    statusEl.textContent = "Typing " + demo.lang + " (" + demo.tag + ")";
-    view.input.classList.add("caret");
+    statusEl.textContent = "Typing " + demo.lang + " (" + demo.tag + ")";    view.input.classList.add("caret");
     view.output.classList.add("caret");
 
     for (let typed = 0; typed <= demo.text.length; typed++) {
