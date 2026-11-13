@@ -3,4 +3,5 @@ __pycache__
 IndicTransliteration
 logs
 onnx_model
-MODEL_README.mddemo.html
+MODEL_README.md
+demo.html
