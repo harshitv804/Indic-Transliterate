@@ -41,6 +41,77 @@ cheap to self-host and fast enough for live, word-by-word typing.
 | Languages | English, Tamil, Hindi, Telugu, Malayalam, Kannada |
 | Dataset | [AI4Bharat Aksharantar](https://huggingface.co/datasets/ai4bharat/Aksharantar) |
 
+## Quickstart
+
+### 1. Install
+
+```bash
+git clone https://github.com/harshitv804/Indic-Transliterate
+cd Indic-Transliterate
+pip install -r requirements.txt
+```
+
+### 2. Import and run
+
+```python
+# Run from the repo root so ``transliterate`` is importable.
+from huggingface_hub import snapshot_download
+
+from transliterate import IndicTransliterator
+
+# Download the 12 MB ONNX bundle once; it is then cached by huggingface_hub.
+model_dir = snapshot_download(
+    "harshitv804/Indic-Transliterate",
+    allow_patterns=["onnx_model/*"],
+)
+
+tr = IndicTransliterator(f"{model_dir}/onnx_model")
+
+print(tr.translate("How are you?", "en-ta"))   # ஹோவ் அரே யூ?
+print(tr.translate("hello", "en-ta"))          # ஹெல்லோ
+print(tr.translate("vanakkam", "en-ta"))       # வணக்கம்
+print(tr.translate("வணக்கம்", "ta-en"))        # vanakkam
+```
+
+If you already have the bundle locally, skip the download:
+
+```python
+tr = IndicTransliterator("onnx_model")
+```
+
+Decoding options:
+
+```python
+tr.translate("How are you?", "en-ta", beam_size=4, length_penalty=1.0)
+tr.translate_batch(
+    ["How are you?", "Good morning"],
+    ["en-ta", "en-ta"],
+)
+```
+
+### 3. Run the web app
+
+```bash
+python app.py          # opens http://127.0.0.1:7860
+```
+
+### 4. Run the PyTorch checkpoint
+
+```python
+from inference import Transliterator
+
+tr = Transliterator.from_checkpoint("step_105000.pt", device="cuda")
+print(tr.translate("How are you?", "en-ta"))
+```
+
+```bash
+python inference.py --checkpoint step_105000.pt --direction en-ta --text "How are you?"
+```
+
+Omit `--text` for an interactive prompt. The PyTorch path needs a CUDA GPU; the
+ONNX path above is CPU-only and is what the Space uses.
+
+
 ## Architecture
 
 A pre-norm encoder-decoder transformer. A source sentence is encoded once, then
@@ -170,54 +241,10 @@ oversubscription hurts. The app caps intra-op threads at `min(4, cpu_count)`,
 which took per-word latency on a shared container from ~2–7 s down to
 ~0.1–0.3 s.
 
-## Installation
+## Gradio Space
 
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
-
-### Python API (ONNX, CPU)
-
-```python
-from transliterate import IndicTransliterator
-
-tr = IndicTransliterator("onnx_model")
-
-# A word
-tr.translate("hello", "en-ta")          # 'ஹெல்லோ'
-
-# A sentence: words are split, translated, and reassembled
-tr.translate("How are you?", "en-ta")   # 'ஹோவ் அரே யூ?'
-
-# Tune decoding
-tr.translate("How are you?", "en-ta", beam_size=4, length_penalty=1.0)
-```
-
-### PyTorch checkpoint
-
-```python
-from inference import Transliterator
-
-tr = Transliterator.from_checkpoint("step_105000.pt", device="cuda")
-print(tr.translate("How are you?", "en-ta"))
-```
-
-```bash
-python inference.py --checkpoint step_105000.pt --direction en-ta --text "How are you?"
-```
-
-Omit `--text` for an interactive prompt.
-
-### Gradio web app
-
-```bash
-python app.py
-```
-
-The Space in `app.py` has the input on the left and the output on the right,
-a direction dropdown, and **live word-by-word transliteration**: a word is
+`app.py` is the live demo app: input on the left, output on the right, a
+direction dropdown, and **live word-by-word transliteration** — a word is
 translated as soon as it is followed by a space or punctuation, the word
 currently being typed stays untouched, and backspacing also removes its
 translation. Completed words are cached per `(word, direction)` so retyping a
