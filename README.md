@@ -1,16 +1,3 @@
----
-title: Indic Transliterate
-emoji: 🔤
-colorFrom: indigo
-colorTo: purple
-sdk: gradio
-sdk_version: 6.32.0
-app_file: app.py
-pinned: false
-license: apache-2.0
-short_description: Live word-by-word Indic transliteration
----
-
 # Indic Transliterate
 
 A compact **5.37M-parameter encoder-decoder transformer** for word-level

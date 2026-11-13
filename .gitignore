@@ -4,5 +4,6 @@ IndicTransliteration
 logs
 onnx_model
 MODEL_README.md
+SPACE_README.md
 demo.html
 demo.gif
