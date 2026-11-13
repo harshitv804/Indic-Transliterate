@@ -6,6 +6,7 @@ Uses beam search to decode with :class:`OnnxTransliterator`.
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -63,6 +64,15 @@ class OnnxTransliterator:
 
         options = ort.SessionOptions()
         options.log_severity_level = 3
+        threads = int(os.getenv("ONNX_NUM_THREADS", "0"))
+        if threads < 1:
+            # Small models do not scale past a few cores, and oversubscribing
+            # a shared container wastes most of the time in thread handoff.
+            threads = min(4, os.cpu_count() or 1)
+        options.intra_op_num_threads = threads
+        options.inter_op_num_threads = 1
+        options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+        self.num_threads = threads
         providers = ["CPUExecutionProvider"]
         self.encoder = ort.InferenceSession(
             str(self.model_dir / "encoder.onnx"), options, providers=providers

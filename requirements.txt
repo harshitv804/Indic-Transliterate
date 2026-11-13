@@ -1,0 +1,5 @@
+gradio==6.32.0
+huggingface-hub>=1.16.0,<3.0.0
+numpy>=1.24,<3.0
+onnxruntime>=1.17.0
+tokenizers>=0.15.0
